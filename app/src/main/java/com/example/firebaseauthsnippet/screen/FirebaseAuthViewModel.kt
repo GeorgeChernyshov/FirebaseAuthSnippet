@@ -57,6 +57,14 @@ class FirebaseAuthViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(signInIntentSender = intentSender)
     }
 
+    fun setEmail(email: String) {
+        _uiState.value = _uiState.value.copy(emailInput = email)
+    }
+
+    fun setPassword(password: String) {
+        _uiState.value = _uiState.value.copy(passwordInput = password)
+    }
+
     fun beginGoogleSignIn() {
         _uiState.value = _uiState.value.copy(
             isLoading = true,
@@ -132,6 +140,85 @@ class FirebaseAuthViewModel @Inject constructor(
             )
         } finally {
             _uiState.value = _uiState.value.copy(isLoading = false)
+        }
+    }
+
+    fun signInWithEmailAndPassword() {
+        _uiState.value = _uiState.value.copy(
+            isLoading = true,
+            error = null
+        )
+
+        viewModelScope.launch {
+            try {
+                val email = _uiState.value.emailInput
+                val password = _uiState.value.passwordInput
+
+                if (email.isNullOrBlank() || password.isNullOrBlank()) {
+                    throw IllegalArgumentException("Email and password cannot be empty.")
+                }
+
+                val result = auth.signInWithEmailAndPassword(
+                    email,
+                    password
+                ).await()
+
+                Log.d(TAG, "Email/Password sign in successful. User: ${result.user?.displayName}")
+
+                _uiState.value = _uiState.value.copy(
+                    emailInput = "",
+                    passwordInput = ""
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Email/Password sign in failed: ${e.message}", e)
+                _uiState.value = _uiState.value.copy(
+                    error = e.message,
+                    isAuthenticated = false
+                )
+            } finally {
+                _uiState.value = _uiState.value.copy(isLoading = false)
+            }
+        }
+    }
+
+    fun createUserWithEmailAndPassword() {
+        _uiState.value = _uiState.value.copy(
+            isLoading = true,
+            error = null
+        )
+
+        viewModelScope.launch {
+            try {
+                val email = _uiState.value.emailInput
+                val password = _uiState.value.passwordInput
+
+                if (email.isNullOrBlank() || password.isNullOrBlank()) {
+                    throw IllegalArgumentException("Email and password cannot be empty.")
+                }
+                if (password.length < 6) { // Firebase requires min 6 chars for password
+                    throw IllegalArgumentException("Password must be at least 6 characters long.")
+                }
+
+                val result = auth.createUserWithEmailAndPassword(
+                    email,
+                    password
+                ).await()
+
+                Log.d(TAG, "Email/Password user created successfully. User: ${result.user?.displayName}")
+                // AuthStateListener will update UI state, but clear inputs
+                _uiState.value = _uiState.value.copy(
+                    emailInput = "",
+                    passwordInput = ""
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Email/Password user creation failed: ${e.message}", e)
+                _uiState.value = _uiState.value.copy(
+                    error = e.message,
+                    isAuthenticated = false
+                )
+            } finally {
+                _uiState.value = _uiState.value.copy(isLoading = false)
+            }
         }
     }
 

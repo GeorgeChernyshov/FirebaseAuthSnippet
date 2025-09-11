@@ -7,6 +7,7 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -84,12 +87,12 @@ fun FirebaseAuthScreen(
 
     FirebaseAuthScreenContent(
         uiState = uiState.value,
-        onSignInGoogleClick = {
-            viewModel.beginGoogleSignIn()
-        },
-        onSignOutClick = {
-            viewModel.signOut()
-        }
+        onSignInGoogleClick = { viewModel.beginGoogleSignIn() },
+        onSignOutClick = { viewModel.signOut() },
+        onEmailInputChange = { viewModel.setEmail(it) },
+        onPasswordInputChange = { viewModel.setPassword(it) },
+        onSignInEmailClick = { viewModel.signInWithEmailAndPassword() },
+        onSignUpEmailClick = { viewModel.createUserWithEmailAndPassword() }
     )
 }
 
@@ -97,7 +100,11 @@ fun FirebaseAuthScreen(
 fun FirebaseAuthScreenContent(
     uiState: FirebaseAuthScreenUiState,
     onSignInGoogleClick: () -> Unit,
-    onSignOutClick: () -> Unit
+    onSignOutClick: () -> Unit,
+    onEmailInputChange: (String) -> Unit,
+    onPasswordInputChange: (String) -> Unit,
+    onSignInEmailClick: () -> Unit,
+    onSignUpEmailClick: () -> Unit
 ) {
     Scaffold(
         modifier = Modifier.safeDrawingPadding(),
@@ -149,6 +156,52 @@ fun FirebaseAuthScreenContent(
                     Text("Sign in with Google")
                 }
 
+                Spacer(modifier = Modifier.height(24.dp)) // Separator for different auth methods
+                Text("OR", style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(24.dp))
+
+
+                // Email/Password Input Fields and Buttons (NEW)
+                OutlinedTextField(
+                    value = uiState.emailInput.orEmpty(),
+                    onValueChange = onEmailInputChange,
+                    label = { Text("Email") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(0.8f)
+                )
+
+                OutlinedTextField(
+                    value = uiState.passwordInput.orEmpty(),
+                    onValueChange = onPasswordInputChange,
+                    label = { Text("Password") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(0.8f)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(0.8f),
+                    horizontalArrangement = Arrangement.SpaceAround
+                ) {
+                    Button(
+                        onClick = onSignInEmailClick,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = 4.dp)
+                    ) {
+                        Text("Sign In")
+                    }
+                    Button(
+                        onClick = onSignUpEmailClick,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 4.dp)
+                    ) {
+                        Text("Sign Up")
+                    }
+                }
+
                 uiState.error?.let { error ->
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
@@ -169,7 +222,11 @@ fun FirebaseAuthScreenContentPreview() {
         FirebaseAuthScreenContent(
             uiState = FirebaseAuthScreenUiState.DEFAULT,
             onSignInGoogleClick = {},
-            onSignOutClick = {}
+            onSignOutClick = {},
+            onEmailInputChange = {},
+            onPasswordInputChange = {},
+            onSignInEmailClick = {},
+            onSignUpEmailClick = {}
         )
     }
 }
